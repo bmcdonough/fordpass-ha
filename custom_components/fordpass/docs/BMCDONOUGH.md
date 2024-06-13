@@ -16,3 +16,4 @@ Jun 13 21:45:57 hostname homeassistant/8280ec07e0a1[146]: #033[36m2024-06-13 21:
 1. supplies auth URL
 1. waits for user_input of tokenstr
 ### within fordpass.config_flow, function generate_url
+1. interesting, I do not think it uses the username at all in the generation of the auth url
