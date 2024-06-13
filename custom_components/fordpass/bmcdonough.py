@@ -29,7 +29,7 @@ debug = True
 
 
 def config_logging():
-    syslog_fmt = "%(filename)s[%(process)d] - [%(name)s] :: (%(funcName)s) : %(levelname)s - %(message)s"
+    syslog_fmt = "%(filename)s[%(process)d] - [%(name)s:%(lineno)d] :: (%(funcName)s) : %(levelname)s - %(message)s"
     syslog_handler = logging.handlers.SysLogHandler(address="/dev/log", facility="user")
     syslog_handler.setFormatter(logging.Formatter(syslog_fmt))
     _LOGGER.addHandler(syslog_handler)
