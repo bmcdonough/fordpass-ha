@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import logging
 import logging.handlers
+import os
+from dotenv import load_dotenv
 from pdb import set_trace as bp
 
-from .const import (
+from const import (
     CONF_DISTANCE_UNIT,
     CONF_PRESSURE_UNIT,
     COORDINATOR,
@@ -17,7 +19,7 @@ from .const import (
     VEHICLE,
     VIN,
 )
-from .fordpass_new import Vehicle
+from fordpass_new import Vehicle
 
 _LOGGER = logging.getLogger(__name__)
 # verbose = True
@@ -58,12 +60,11 @@ def config_logging():
 
 def main():
     try:
-        # do something successfully
-        _LOGGER.debug("debug")
-        _LOGGER.info("informational")
-        _LOGGER.warning("warning")
-        _LOGGER.error("error")
-        _LOGGER.critical("critical")
+        # Check if .env file exists
+        if os.path.isfile(".env"):
+            # Load environment variables from the .env file
+            load_dotenv()
+            bp()
         return 0  # Indicate successful execution
     except Exception as e:
         _LOGGER.error(f"Error condition: {e}")
