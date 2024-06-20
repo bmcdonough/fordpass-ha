@@ -11,7 +11,7 @@ from homeassistant.core import callback
 from base64 import urlsafe_b64encode
 
 
-from .const import (  # pylint:disable=unused-import
+from const import (
     CONF_DISTANCE_UNIT,
     CONF_PRESSURE_UNIT,
     DEFAULT_DISTANCE_UNIT,
@@ -28,7 +28,7 @@ from .const import (  # pylint:disable=unused-import
     DISTANCE_CONVERSION_DISABLED,
     DISTANCE_CONVERSION_DISABLED_DEFAULT
 )
-from .fordpass_new import Vehicle
+from fordpass_new import Vehicle
 
 _LOGGER = logging.getLogger(__name__)
 
