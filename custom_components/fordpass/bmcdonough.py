@@ -69,15 +69,30 @@ async def main():
         if os.path.isfile(".env"):
             # Load environment variables from the .env file
             load_dotenv()
+            fc_username = os.environ.get('FORDCONNECT_USERNAME')
+            fc_region = os.environ.get('FORDCONNECT_REGION')
+            _LOGGER.debug(globals())
             # initialize ConfigFlow
             cf = ConfigFlow()
             _LOGGER.debug(f"dir(cf)   {dir(cf)}")
             # initialize async_step_user
-            init_step_user = await cf.async_step_user(None)
-            _LOGGER.debug(f"init_step_user   {init_step_user}")
-            if init_step_user["step_id"] == "user":
-                _LOGGER.debug(f"At step_id: {init_step_user['step_id']}")
-                pass
+            step_status = await cf.async_step_user(None)
+            _LOGGER.debug(f"step_status   {step_status}")
+
+            if step_status["step_id"] == "user":
+                _LOGGER.debug(f"At step_id: {step_status['step_id']}")
+                user_input = {'username': fc_username, 'region': fc_region}
+                _LOGGER.info("sending username and region")
+                step_status = await cf.async_step_user(user_input)
+                _LOGGER.debug(f"step_status: {step_status}")
+            else:
+                _LOGGER.debug("found else")
+
+            if step_status["step_id"] == "token":
+                _LOGGER.debug(f"At step_id: {step_status['step_id']}")
+                bp()
+                step_status = await cf.async_step_token(None)
+                _LOGGER.debug(f"step_status   {step_status}")
             else:
                 _LOGGER.debug("found else")
         return 0  # Indicate successful execution
