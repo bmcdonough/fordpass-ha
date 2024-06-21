@@ -158,8 +158,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     
     async def async_step_token(self, user_input=None):
         errors = {}
-        
+        if user_input is None:
+            _LOGGER.warning(f"async_step_token:: First Time self:{self}, user_input:{user_input}")        
         if user_input is not None:
+            _LOGGER.warning(f"async_step_token:: Second Time self:{self}, user_input:{user_input}")
             try:
                 token = user_input["tokenstr"]
                 if self.check_token(token):
@@ -167,28 +169,24 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     user_input["username"] = self.username
                     user_input["password"] = ""
                     user_input["code_verifier"] = self.login_input["code_verifier"]
-                    _LOGGER.debug(f"line:170 {user_input}")
                     info = await validate_token(self.hass, user_input)
                     self.login_input = user_input
                     if info is None:
                         self.vehicles = None
-                        _LOGGER.debug("NO VEHICLES FOUND")
+                        _LOGGER.warning("async_step_token:: NO VEHICLES FOUND")
                     else:
                         self.vehicles = info["userVehicles"]["vehicleDetails"]
+                        _LOGGER.warning(f"""async_step_token:: user vehicles: {info["userVehicles"]["vehicleDetails"]}""")
                     if self.vehicles is None:
                         return await self.async_step_vin()
                     return await self.async_step_vehicle()
-                    
                 else:
-                    errors["base"] = "invalid_token"
-                
+                   errors["base"] = "invalid_token"                
             except CannotConnect:
                 print("EXCEPT")
                 errors["base"] = "cannot_connect"
-
         if self.region is not None:
-            _LOGGER.debug("Region")
-            _LOGGER.debug(f"line:191 {self.region}")
+            _LOGGER.warning(f"async_step_token:: self.region is not None: {self.region}")
             return self.async_show_form(
                 step_id="token", data_schema=
                     vol.Schema(
@@ -204,27 +202,27 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if "fordapp://userauthorized/?code=" in token:
             return True
         return False
-    
-
 
     def generate_url(self, region):
-        _LOGGER.debug(f"line:211 {REGIONS[region]}")
         code1 = ''.join(random.choice(string.ascii_lowercase) for i in range(43))
         code_verifier = self.generate_hash(code1)
         self.login_input["code_verifier"] = code1
-        
         url = f"""{REGIONS[region]["locale_url"]}/4566605f-43a7-400a-946e-89cc9fdb0bd7/B2C_1A_SignInSignUp_{REGIONS[region]["locale"]}/oauth2/v2.0/authorize?redirect_uri=fordapp://userauthorized&response_type=code&max_age=3600&code_challenge={code_verifier}&code_challenge_method=S256&scope=%2009852200-05fd-41f6-8c21-d36d3497dc64%20openid&client_id=09852200-05fd-41f6-8c21-d36d3497dc64&ui_locales={REGIONS[region]["locale"]}&language_code={REGIONS[region]["locale"]}&country_code={REGIONS[region]["locale_short"]}&ford_application_id={REGIONS[region]["region"]}"""
-        _LOGGER.debug(f"line:217 {url}")
+        _LOGGER.warning(f"generate_url:: {url}")
         return url
+
     def base64_url_encode(self, data):
         """Encode string to base64"""
+        _LOGGER.warning(f"base64_url_encode:: {urlsafe_b64encode(data).rstrip(b'=')}")
         return urlsafe_b64encode(data).rstrip(b'=')
 
     def generate_hash(self, code):
         """Generate hash for login"""
         hashengine = hashlib.sha256()
         hashengine.update(code.encode('utf-8'))
+        _LOGGER.warning(f"generate_hash:: {urlsafe_b64encode(hashengine.digest()).rstrip(b'=').decode('utf-8')}")
         return self.base64_url_encode(hashengine.digest()).decode('utf-8')
+
     def validNumber(self, phone_number):
         pattern = re.compile("^([+]\d{2})?\d{10}$", re.IGNORECASE)
         pattern2 = re.compile("^([+]\d{2})?\d{9}$", re.IGNORECASE)
