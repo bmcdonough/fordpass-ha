@@ -43,6 +43,27 @@ url = url + f"ford_application_id={REGIONS[region]['region']}" # const.py REGION
 #### the user loads the URL, logs in, copies response per wiki
 1. URL and response are returned to async_step_token as async_show_form
 1. returned to async_step_user
+
+#### data is exchanged using Voluptuous
+* [https://developers.home-assistant.io/docs/data_entry_flow_index/](https://developers.home-assistant.io/docs/data_entry_flow_index/)
+```python
+{
+    # The result type of the flow
+    "type": FlowResultType.FORM,
+    # the id of the flow
+    "flow_id": "abcdfgh1234",
+    # handler name
+    "handler": "hue",
+    # name of the step, flow.async_step_[step_id] will be called when form submitted
+    "step_id": "init",
+    # a voluptuous schema to build and validate user input
+    "data_schema": vol.Schema(),
+    # an errors dict, None if no errors
+    "errors": errors,
+    # a detail information about the step
+    "description_placeholders": description_placeholders,
+}
+```
 # mermaid diagram
 ```mermaid
 graph TD;
