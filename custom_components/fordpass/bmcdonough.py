@@ -77,22 +77,43 @@ async def main():
             _LOGGER.debug(f"dir(cf)   {dir(cf)}")
             # initialize async_step_user
             step_status = await cf.async_step_user(None)
-            _LOGGER.debug(f"step_status   {step_status}")
+            _LOGGER.debug(f"step_status1   {step_status}")
 
             if step_status["step_id"] == "user":
                 _LOGGER.debug(f"At step_id: {step_status['step_id']}")
                 user_input = {'username': fc_username, 'region': fc_region}
                 _LOGGER.info("sending username and region")
                 step_status = await cf.async_step_user(user_input)
-                _LOGGER.debug(f"step_status: {step_status}")
+                _LOGGER.debug(f"step_status2   {step_status}")
+                inferred_schema = {}
+                for key, value in step_status['data_schema'].schema.items():
+                    inferred_schema[key] = type(value)
+                print(f"inferred_schema: {inferred_schema}")
             else:
                 _LOGGER.debug("found else")
 
             if step_status["step_id"] == "token":
                 _LOGGER.debug(f"At step_id: {step_status['step_id']}")
-                bp()
+
+                schema_from_library = step_status['data_schema']
+                print(f"schema: {schema_from_library}")
+                print(f"dir-schema: {dir(schema_from_library)}")
+                print(f"vars-schema: {vars(schema_from_library)}")
+                print(f"schema.schema: {schema_from_library.schema}")
+                print(f"dir-schema.schema: {dir(schema_from_library.schema)}")
+#                print(f"vars-schema.schema: {vars(schema_from_library.schema)}")
+
+                inferred_schema = {}
+                for key, value in schema_from_library.items():
+                    inferred_schema[key] = type(value)
+                print(f"inferred_schema: {inferred_schema}")
+#                my_data = {}
+#                validated_data = schema_from_library(my_data)
+#                print(f"validated_data: {validated_data}")
+
                 step_status = await cf.async_step_token(None)
-                _LOGGER.debug(f"step_status   {step_status}")
+                _LOGGER.debug(f"step_status3   {step_status}")
+                _LOGGER.debug(f"dir-step_status   {dir(step_status)}")
             else:
                 _LOGGER.debug("found else")
         return 0  # Indicate successful execution
