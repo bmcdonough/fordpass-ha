@@ -10,21 +10,11 @@ from dotenv import load_dotenv
 from config_flow import ConfigFlow
 from fordpass_new import Vehicle
 
-# from const import (
-#    CONF_DISTANCE_UNIT,
-#    CONF_PRESSURE_UNIT,
-#    COORDINATOR,
-#    DEFAULT_DISTANCE_UNIT,
-#    DEFAULT_PRESSURE_UNIT,
-#    DOMAIN,
-#    MANUFACTURER,
-#    REGION,
-#    UPDATE_INTERVAL,
-#    UPDATE_INTERVAL_DEFAULT,
-#    VEHICLE,
-#    VIN,
-# )
+import homeassistant.helpers.entity_registry as er
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant import config_entries, core, exceptions
 
+from const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 # verbose = True
@@ -62,6 +52,53 @@ def config_logging():
     _LOGGER.debug("Completed config_logging")
     return None
 
+def print_form_values(hass: core.HomeAssistant, form_entity_id):
+    """Prints all values in a Home Assistant form entity.
+
+    Args:
+        hass (homeassistant.core.HomeAssistant): The Home Assistant instance.
+        form_entity_id (str): The entity ID of the form entity.
+    """
+
+    entity_registry = er.EntityRegistry(hass)
+    form = entity_registry.async_get(form_entity_id)
+
+    if form is None:
+        print(f"Entity not found: {form_entity_id}")
+        return
+
+    # Access form data based on its schema
+    schema = form.schema
+    values = hass.data.get(form_entity_id)
+
+    # Iterate through schema fields and print values
+    for field_name, field_data in schema.get('schema', {}).items():
+        field_value = values.get(field_name)
+        print(f"{field_name}: {field_value}")
+
+def log_step_status(self):
+    if type(self).__name__ == 'dict':
+        _LOGGER.debug(f"found dictionary: {type(self).__name__}")
+        for key, value in self.items():
+            _LOGGER.debug("---")
+            _LOGGER.debug(f"self key:{key}, value:{value} value_type:{type(value)}")
+            if 'data_schema' in key:
+                _LOGGER.debug("--- ---")
+                _LOGGER.debug(f"found data schema: {self[key]}")
+                _LOGGER.debug(f"dir data schema: {dir(self[key])}")
+                for key2, value2 in self[key].schema.items():
+                    _LOGGER.debug("--- --- ---")
+                    _LOGGER.debug(f"self['{key}'].schema, key2:{key2} value2:{value2} value2_type:{type(value2)}")
+                    _LOGGER.debug(f"found data schema in schema: {key2}")
+                    _LOGGER.debug(f"dir data schema in schema: {dir(key2)}")
+                    bp()
+                    for key3, value3 in value2.schema.items():
+                        _LOGGER.debug("--- --- --- ---")
+                        _LOGGER.debug(f"key3.schema, key3:{key3} value3:{value3} value3_type:{type(value3)}")
+            if hasattr(key, 'schema'):
+                _LOGGER.debug(f"schema in key: {self[key]}")
+    return None
+
 
 async def main():
     try:
@@ -71,7 +108,6 @@ async def main():
             load_dotenv()
             fc_username = os.environ.get('FORDCONNECT_USERNAME')
             fc_region = os.environ.get('FORDCONNECT_REGION')
-            _LOGGER.debug(globals())
             # initialize ConfigFlow
             cf = ConfigFlow()
             _LOGGER.debug(f"dir(cf)   {dir(cf)}")
@@ -85,6 +121,12 @@ async def main():
                 _LOGGER.info("sending username and region")
                 step_status = await cf.async_step_user(user_input)
                 _LOGGER.debug(f"step_status2   {step_status}")
+
+                print(f"\n###")
+#                print_form_values(hass, step_status)
+                print(f"###\n")
+                log_step_status(step_status)
+
                 inferred_schema = {}
                 for key, value in step_status['data_schema'].schema.items():
                     inferred_schema[key] = type(value)
@@ -102,14 +144,6 @@ async def main():
                 print(f"schema.schema: {schema_from_library.schema}")
                 print(f"dir-schema.schema: {dir(schema_from_library.schema)}")
 #                print(f"vars-schema.schema: {vars(schema_from_library.schema)}")
-
-                inferred_schema = {}
-                for key, value in schema_from_library.items():
-                    inferred_schema[key] = type(value)
-                print(f"inferred_schema: {inferred_schema}")
-#                my_data = {}
-#                validated_data = schema_from_library(my_data)
-#                print(f"validated_data: {validated_data}")
 
                 step_status = await cf.async_step_token(None)
                 _LOGGER.debug(f"step_status3   {step_status}")
