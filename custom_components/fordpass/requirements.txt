@@ -1,4 +1,9 @@
+black
 homeassistant
+flake8
+isort
+pip
+setuptools
 python-dotenv # dotenv
 requests
 voluptuous
