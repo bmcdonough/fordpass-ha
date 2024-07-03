@@ -136,7 +136,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    config_logging()
+    _LOGGER = config_logging()
     exit_code = asyncio.run(main())
     if exit_code == 0:
         _LOGGER.info("Completed successfully.")
