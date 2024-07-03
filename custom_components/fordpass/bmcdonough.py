@@ -3,7 +3,6 @@ import asyncio
 import logging
 import logging.handlers
 import os
-from pdb import set_trace as bp
 
 from dotenv import load_dotenv
 
@@ -13,14 +12,8 @@ from fordpass_new import Vehicle
 import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant import config_entries, core, exceptions
-
+from homeassistant.core import HomeAssistant
 from const import DOMAIN
-
-_LOGGER = logging.getLogger(__name__)
-# verbose = True
-verbose = False
-debug = True
-# debug = False
 
 
 def config_logging():
@@ -31,53 +24,35 @@ def config_logging():
     )
     return(logging.getLogger(__name__))
 
-def print_form_values(hass: core.HomeAssistant, form_entity_id):
-    """Prints all values in a Home Assistant form entity.
+async def my_step_status():
+    # initialize async_step_user
+    step_status = await cf.async_step_user(None)
+    _LOGGER.debug(f"step_status1   {step_status}")
+    if step_status["step_id"] == "user":
+        _LOGGER.debug(f"At step_id: {step_status['step_id']}")
+        user_input = {'username': fp_username, 'region': fp_region}
+        _LOGGER.info("sending username and region")
+        step_status = await cf.async_step_user(user_input)
+        _LOGGER.debug(f"step_status2   {step_status}")
+    elif step_status["step_id"] == "token":
+        _LOGGER.debug(f"At step_id: {step_status['step_id']}")
+        step_status = await cf.async_step_token(None)
+        _LOGGER.debug(f"step_status3   {step_status}")
+        _LOGGER.debug(f"dir-step_status   {dir(step_status)}")
+    else:
+        _LOGGER.debug("found else")
+    return 0  # Indicate successful execution
 
-    Args:
-        hass (homeassistant.core.HomeAssistant): The Home Assistant instance.
-        form_entity_id (str): The entity ID of the form entity.
-    """
+async def my_call_to_fpn(url1):
+    results = {}
+    fpn = Vehicle(username=os.environ.get('FORDPASS_USERNAME'), password=os.environ.get('FORDPASS_PASSWORD'), vin=os.environ.get('FORDPASS_VIN'), region=os.environ.get('FORDPASS_REGION'), config_location=os.environ.get('HOME')+"/.fordpass_token")
+    results = await(hass.async_add_executor_job(fpn.bmcd_auth(url1)))
+    return(results)
 
-    entity_registry = er.EntityRegistry(hass)
-    form = entity_registry.async_get(form_entity_id)
-
-    if form is None:
-        print(f"Entity not found: {form_entity_id}")
-        return
-
-    # Access form data based on its schema
-    schema = form.schema
-    values = hass.data.get(form_entity_id)
-
-    # Iterate through schema fields and print values
-    for field_name, field_data in schema.get('schema', {}).items():
-        field_value = values.get(field_name)
-        print(f"{field_name}: {field_value}")
-
-def log_step_status(self):
-    if type(self).__name__ == 'dict':
-        _LOGGER.debug(f"found dictionary: {type(self).__name__}")
-        for key, value in self.items():
-            _LOGGER.debug("---")
-            _LOGGER.debug(f"self key:{key}, value:{value} value_type:{type(value)}")
-            if 'data_schema' in key:
-                _LOGGER.debug("--- ---")
-                _LOGGER.debug(f"found data schema: {self[key]}")
-                _LOGGER.debug(f"dir data schema: {dir(self[key])}")
-                for key2, value2 in self[key].schema.items():
-                    _LOGGER.debug("--- --- ---")
-                    _LOGGER.debug(f"self['{key}'].schema, key2:{key2} value2:{value2} value2_type:{type(value2)}")
-                    _LOGGER.debug(f"found data schema in schema: {key2}")
-                    _LOGGER.debug(f"dir data schema in schema: {dir(key2)}")
-                    bp()
-                    for key3, value3 in value2.schema.items():
-                        _LOGGER.debug("--- --- --- ---")
-                        _LOGGER.debug(f"key3.schema, key3:{key3} value3:{value3} value3_type:{type(value3)}")
-            if hasattr(key, 'schema'):
-                _LOGGER.debug(f"schema in key: {self[key]}")
-    return None
-
+async def async_setup(hass: HomeAssistant, config: dict):
+    """Set up the FordPass component."""
+    hass.data.setdefault(DOMAIN, {})
+    return True
 
 async def main():
     try:
@@ -85,51 +60,25 @@ async def main():
         if os.path.isfile(".env"):
             # Load environment variables from the .env file
             load_dotenv()
-            fc_username = os.environ.get('FORDCONNECT_USERNAME')
-            fc_region = os.environ.get('FORDCONNECT_REGION')
+            fp_username = os.environ.get('FORDPASS_USERNAME')
+            fp_region = os.environ.get('FORDPASS_REGION')
+            if (fp_username or fp_region) is None:
+                _LOGGER.warning(f"if either fp_username:[{fp_username}] or fp_region:[{fp_region}] is None, stop")
+                return 1
+            await async_setup(HomeAssistant, None)
             # initialize ConfigFlow
             cf = ConfigFlow()
-            _LOGGER.debug(f"dir(cf)   {dir(cf)}")
-            # initialize async_step_user
-            step_status = await cf.async_step_user(None)
-            _LOGGER.debug(f"step_status1   {step_status}")
+#            _LOGGER.debug(f"url from ConfigFlow.generate_url(region): {cf.generate_url(region=os.environ.get('FORDPASS_REGION'))}")
+            fordpass_login_url = cf.generate_url(region=os.environ.get('FORDPASS_REGION'))
 
-            if step_status["step_id"] == "user":
-                _LOGGER.debug(f"At step_id: {step_status['step_id']}")
-                user_input = {'username': fc_username, 'region': fc_region}
-                _LOGGER.info("sending username and region")
-                step_status = await cf.async_step_user(user_input)
-                _LOGGER.debug(f"step_status2   {step_status}")
+            what_happened = await my_call_to_fpn(fordpass_login_url)
+            print(f"what happened: {vars(what_happened)}")
+            return 0
+        else:
+            _LOGGER.warning("unable to load .env")
+            print("unable to load .env")
+            return 1
 
-                print(f"\n###")
-#                print_form_values(hass, step_status)
-                print(f"###\n")
-                log_step_status(step_status)
-
-                inferred_schema = {}
-                for key, value in step_status['data_schema'].schema.items():
-                    inferred_schema[key] = type(value)
-                print(f"inferred_schema: {inferred_schema}")
-            else:
-                _LOGGER.debug("found else")
-
-            if step_status["step_id"] == "token":
-                _LOGGER.debug(f"At step_id: {step_status['step_id']}")
-
-                schema_from_library = step_status['data_schema']
-                print(f"schema: {schema_from_library}")
-                print(f"dir-schema: {dir(schema_from_library)}")
-                print(f"vars-schema: {vars(schema_from_library)}")
-                print(f"schema.schema: {schema_from_library.schema}")
-                print(f"dir-schema.schema: {dir(schema_from_library.schema)}")
-#                print(f"vars-schema.schema: {vars(schema_from_library.schema)}")
-
-                step_status = await cf.async_step_token(None)
-                _LOGGER.debug(f"step_status3   {step_status}")
-                _LOGGER.debug(f"dir-step_status   {dir(step_status)}")
-            else:
-                _LOGGER.debug("found else")
-        return 0  # Indicate successful execution
     except Exception as e:
         _LOGGER.error(f"Error condition: {e}")
         return 1  # Indicate error

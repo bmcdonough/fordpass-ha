@@ -138,6 +138,23 @@ class Vehicle:
         hashengine.update(code.encode('utf-8'))
         return self.base64_url_encode(hashengine.digest()).decode('utf-8')
 
+
+    def bmcd_auth(self, url1):
+        """New Authentication System """
+        _LOGGER.debug("BMCD System")
+        # Auth Step1
+        headers = {
+            **defaultHeaders,
+            'Content-Type': 'application/json',
+        }
+        response = session.get(
+            url1,
+            headers=headers,
+        )
+        _LOGGER.debug(f"response: {vars(response)}")
+        return(response)
+
+
     def auth(self):
         """New Authentication System """
         _LOGGER.debug("New System")
