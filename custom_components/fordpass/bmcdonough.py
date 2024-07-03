@@ -24,33 +24,12 @@ debug = True
 
 
 def config_logging():
-    syslog_fmt = "%(filename)s[%(process)d] - [%(name)s:%(lineno)d] :: (%(funcName)s) %(levelname)s - %(message)s"
-    syslog_handler = logging.handlers.SysLogHandler(address="/dev/log", facility="user")
-    syslog_handler.setFormatter(logging.Formatter(syslog_fmt))
-    _LOGGER.addHandler(syslog_handler)
-    if verbose:
-        _LOGGER.setLevel(logging.INFO)
-        _LOGGER.info(
-            "Effective logging level is {}".format(
-                logging.getLevelName(_LOGGER.getEffectiveLevel())
-            )
-        )
-    elif debug:
-        _LOGGER.setLevel(logging.DEBUG)
-        _LOGGER.debug(
-            "Effective logging level is {}".format(
-                logging.getLevelName(_LOGGER.getEffectiveLevel())
-            )
-        )
-    else:
-        _LOGGER.setLevel(logging.WARNING)
-        _LOGGER.warning(
-            "Effective logging level is {}".format(
-                logging.getLevelName(_LOGGER.getEffectiveLevel())
-            )
-        )
-    _LOGGER.debug("Completed config_logging")
-    return None
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(filename)s[%(process)d] - [%(name)s:%(lineno)d] :: (%(funcName)s) %(levelname)s - %(message)s",
+        handlers=[logging.handlers.SysLogHandler(address="/dev/log", facility="user")],
+    )
+    return(logging.getLogger(__name__))
 
 def print_form_values(hass: core.HomeAssistant, form_entity_id):
     """Prints all values in a Home Assistant form entity.
